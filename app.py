@@ -159,7 +159,7 @@ def create_task_templates():
         max_completions=1
     ))
     tasks.append(TaskTemplate(
-        desc="Decline using a single-use food or drink container or utensil",
+        desc="Decline using a single-use food or drink container or utensil once",
         user_points=10,
         carbon_savings=500.1,
         waste_savings=100.1,
