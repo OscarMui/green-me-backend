@@ -69,6 +69,7 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     qn1 = db.Column(db.Text)
     qn2 = db.Column(db.Text)
+    subquestion_option = db.Column(db.Text)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -123,18 +124,18 @@ def cli_initdb(drop):
 
 
 def create_questions():
-    qns = [("Do you recycle at least 50% of recyclable products you use?", "How hard would it be for you to do that?"),
-           ("Do you bring a bag to the supermarket?",
+    qns = [("Do you recycle at least 50% of recyclable products you use?", "no", "How hard would it be for you to do that?"),
+           ("Do you bring a bag to the supermarket?", "no",
             "How hard would it be for you to do that?"),
-           ("Do you eat meat?", "How hard would it be for you to do that?"),
-           ("Do you fly more than twice a year?",
+           ("Do you eat meat?", "yes", "How hard would it be for you to do that?"),
+           ("Do you fly more than twice a year?", "yes",
             "How hard would it be for you to do that?"),
-           ("Do you avoid single-use food and drink containers and utensils?",
+           ("Do you avoid single-use food and drink containers and utensils?", "no",
             "How hard would it be for you to do that?"),
-           ("Do you drink milk?", "How hard would it be for you to do that?")]
+           ("Do you drink milk?", "yes", "How hard would it be for you to do that?")]
 
-    for d1, d2 in qns:
-        q = Question(qn1=d1, qn2=d2)
+    for d1, sqo, d2 in qns:
+        q = Question(qn1=d1, qn2=d2, subquestion_option=sqo)
         db.session.add(q)
     db.session.commit()
 
@@ -268,7 +269,7 @@ def cli_getquestions():
     qns = Question.query.all()
     click.echo(f'Found {len(qns)} questions.')
     for q in qns:
-        click.echo(f'{q.id}: {q.desc}')
+        click.echo(f'{q.id}: {q.qn1}')
 
 
 @app.cli.command("gettasktemplates")
