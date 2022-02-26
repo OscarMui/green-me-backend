@@ -1,0 +1,13 @@
+{
+  "results": [
+    {
+      "questionId": 1,
+      "answer1": "Yes"
+    },
+    {
+      "questionId": 2,
+      "answer1": "No",
+      "answer2": 5
+    }
+  ]
+}

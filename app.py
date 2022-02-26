@@ -1,20 +1,120 @@
 # -*- coding: utf-8 -*-
+from flask import Flask, make_response, request, redirect, url_for, abort, session, jsonify
+from jinja2.utils import generate_lorem_ipsum
+from jinja2 import escape
+from flask_sqlalchemy import SQLAlchemy
 import os
+import sys
+import random
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 try:
     from urlparse import urlparse, urljoin
 except ImportError:
     from urllib.parse import urlparse, urljoin
 
-from jinja2 import escape
-from jinja2.utils import generate_lorem_ipsum
-from flask import Flask, make_response, request, redirect, url_for, abort, session, jsonify
+
+# SQLite URI compatible
+WIN = sys.platform.startswith('win')
+if WIN:
+    prefix = 'sqlite:///'
+else:
+    prefix = 'sqlite:////'
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'secret string')
 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL', prefix + os.path.join(app.root_path, 'data.db'))
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+# Models
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text)
+    points = db.Column(db.Integer)
+    tasks = db.relationship('Task')  # collection
+
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Integer, db.ForeignKey('tasktemplate.id'))
+    completed = db.Column(db.Boolean)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    num_completions = db.Column(db.Integer)
+
+
+def viktor_code():
+    # algorithm
+    walking1 = Task(template_id=100, id=1)
+    walking2 = Task(template_id=100, id=2)
+
+
+class TaskTemplate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    desc = db.Column(db.Text)
+    user_points = db.Column(db.Integer)
+    carbon_savings = db.Column(db.Float)
+    waste_savings = db.Column(db.Float)
+    max_completions = db.Column(db.Integer)
+
+
+def get_all_task_templates():
+    pass
+
+
+def get_task_history(userid=0):
+    pass
+
+
+def get_incomplete_tasks(userid=0):
+    pass
+
+
+def get_completed_tasks(userid=0):
+    pass
+
+###
+# DEBUG COMMANDS
+###
+
+
+@app.route('/user/new')
+def new_user():
+    u = User()
+    u.id = random.randint(1, 1000000000)
+    u.name = f"New user {u.id}"
+    u.points = 100
+    db.session.add(u)
+    db.session.commit()
+    response = "Saved"
+    return response
+
+######################
+
+
+@app.route('/')
+def root():
+    response = "Nothing here, move along."
+    return response
+
+
+@app.route('/questionnaire', methods=['POST', 'GET'])
+def questionnaire():
+    if request.method == 'POST':
+        request_data = request.get_json()
+        pp.pprint(request_data)
+        response = "POSTED"
+    else:  # GET
+        response = "GET on /questionnaire"
+    return response
+
 
 # get name value from query string and cookie
-@app.route('/')
 @app.route('/hello')
 def hello():
     name = request.args.get('name')
