@@ -46,6 +46,9 @@ class TaskTemplate(db.Model):
     waste_savings = db.Column(db.Float)
     max_completions = db.Column(db.Integer)
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -111,6 +114,13 @@ def get_completed_tasks(userid=0):
     tasks = Task.query.filter(Task.user_id == userid,
                               Task.completed == True).all()
     return tasks
+
+
+def get_task(taskid=0):
+    tasks = Task.query.filter(Task.id == taskid).all()
+    if len(tasks) == 0:
+        return None
+    return tasks[0]
 
 
 def get_questionnaire_responses(userid=0):
@@ -201,11 +211,15 @@ def cli_getresponses(userid):
         click.echo(f'{r.answer2}')
 
 
+def get_next_tasks(userid):
+    return recommend_tasks(get_all_questions(), get_questionnaire_responses(userid), get_all_task_templates(
+    ), get_incomplete_tasks(userid), get_completed_tasks(userid))
+
+
 @app.cli.command("recommend")
 @click.argument("userid")
 def cli_recommend(userid):
-    tasks = recommend_tasks(get_all_questions(), get_questionnaire_responses(userid), get_all_task_templates(
-    ), get_incomplete_tasks(userid), get_completed_tasks(userid))
+    tasks = get_next_tasks(userid)
     print(tasks)
 
 ############################
@@ -382,6 +396,7 @@ def root():
 def questionnaire():
     if request.method == 'POST':
         request_data = request.get_json()
+        userid = request_data["userId"]
 
         for row in request_data["results"]:
             ans1, ans2 = "", ""
@@ -390,15 +405,40 @@ def questionnaire():
             if "answer2" in row:
                 ans2 = row["answer2"]
             ans = QuestionnaireResponse(
-                user_id=request_data["userId"],
+                user_id=userid,
                 question_id=row["questionId"],
                 answer1=ans1,
                 answer2=ans2
             )
             db.session.add(ans)
         db.session.commit()
+
+        # Debug
         pp.pprint(request_data)
         response = "POSTED"
+
+        # Get next task
+        tasks = get_next_tasks(userid)
+        task_objects = []
+        for tasktemplate in tasks:
+            t = Task(
+                template_id=tasktemplate.id,
+                completed=False,
+                user_id=userid,
+                num_completions=0
+            )
+            task_objects.append(t.as_dict())
+            db.session.add(t)
+        db.session.commit()
+
+        print(f'{len(tasks)} tasks were generated for userid {userid}')
+
+        response = app.response_class(
+            response=json.dumps(task_objects),
+            status=200,
+            mimetype='application/json'
+        )
+
     else:  # GET
         qns = Question.query.all()
         qns = [q.as_dict() for q in qns]
@@ -410,9 +450,36 @@ def questionnaire():
     return response
 
 
-@app.route('/user/<int:id>', methods=['POST', 'GET'])
-def user(id):
-    pass
+@app.route('/user/<int:id>/incompletetasks', methods=['GET'])
+def incompletetasks(id):
+    tasks = get_incomplete_tasks(id)
+    tasks = [t.as_dict() for t in tasks]
+    tts = get_all_task_templates()
+    tts = [t.as_dict() for t in tts]
+    response = app.response_class(
+        response=json.dumps({"tasks": tasks, "templates": tts}),
+        status=200,
+        mimetype='application/json'
+    )
+    return response
+
+
+@app.route('/user/<int:userid>/task/<int:taskid>', methods=['GET', 'POST'])
+def task(userid, taskid):
+    if request.method == 'POST':
+        pass
+    else:
+        task = get_task(taskid)
+        if task.user_id != userid:
+            abort(401)
+        tts = get_all_task_templates()
+        tts = [t.as_dict() for t in tts]
+        response = app.response_class(
+            response=json.dumps({"task": task.as_dict(), "templates": tts}),
+            status=200,
+            mimetype='application/json'
+        )
+        return response
 
 
 @app.route('/usercallback', methods=['POST'])

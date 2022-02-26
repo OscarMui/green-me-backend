@@ -1,14 +1,11 @@
 {
-  "userId": 1,
+  "userId": "2",
   "results": [
-    {
-      "questionId": 1,
-      "answer1": "Yes"
-    },
-    {
-      "questionId": 2,
-      "answer1": "No",
-      "answer2": "5"
-    }
+    { "questionId": 1, "answer1": "no", "answer2": "2" },
+    { "questionId": 2, "answer1": "yes" },
+    { "questionId": 3, "answer1": "no" },
+    { "questionId": 4, "answer1": "yes", "answer2": "2" },
+    { "questionId": 5, "answer1": "no", "answer2": "3" },
+    { "questionId": 6, "answer1": "yes", "answer2": "4" }
   ]
 }
