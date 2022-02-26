@@ -75,12 +75,16 @@ class Question(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class QuestionnaireAnswer(db.Model):
+class QuestionnaireResponse(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
     answer1 = db.Column(db.Text)
     answer2 = db.Column(db.Text)
+
+############################
+### Functions for Viktor ###
+############################
 
 
 def get_all_task_templates():
@@ -104,9 +108,15 @@ def get_completed_tasks(userid=0):
                               Task.completed == True).all()
     return tasks
 
-###
-# CLI COMMANDS
-###
+
+def get_questionnaire_responses(userid=0):
+    responses = QuestionnaireResponse.query.filter(
+        QuestionnaireResponse.user_id == userid).all()
+    return responses
+
+################
+# CLI COMMANDS #
+################
 
 
 @app.cli.command("initdb")
@@ -120,7 +130,68 @@ def cli_initdb(drop):
     create_task_templates()
     create_fakeusers()
     create_faketasks()
+    create_fakeanswers()
     click.echo('Initialized database.')
+
+
+@app.cli.command("adduser")
+@click.argument("name")
+def cli_newuser(name):
+    u = User()
+    u.name = name
+    u.points = 100
+    db.session.add(u)
+    db.session.commit()
+    click.echo('User added.')
+
+
+@app.cli.command("getusers")
+def cli_getusers():
+    users = User.query.all()
+    click.echo(f'Found {len(users)} users.')
+    for u in users:
+        click.echo(f'{u.id}: {u.name}')
+
+
+@app.cli.command("gettasks")
+@click.argument("userid")
+def cli_gettasks(userid):
+    tasks = get_task_history(userid)
+    click.echo(f'Found {len(tasks)} tasks.')
+    for t in tasks:
+        click.echo(json.dumps(t.as_dict()))
+
+
+@app.cli.command("getquestions")
+def cli_getquestions():
+    qns = Question.query.all()
+    click.echo(f'Found {len(qns)} questions.')
+    for q in qns:
+        click.echo(f'{q.id}: {q.qn1}')
+
+
+@app.cli.command("gettasktemplates")
+def cli_gettasktemplates():
+    tts = TaskTemplate.query.all()
+    click.echo(f'Found {len(tts)} task templates.')
+    for t in tts:
+        click.echo(f'{t.id}: {t.desc}')
+
+
+@app.cli.command("getresponses")
+@click.argument("userid")
+def cli_getresponses(userid):
+    resps = QuestionnaireResponse.query.filter(
+        QuestionnaireResponse.user_id == userid).all()
+    click.echo(f'Found {len(resps)} qn responses.')
+    for r in resps:
+        click.echo(f'{r.id}: qn_id = {r.question_id}')
+        click.echo(f'{r.answer1}')
+        click.echo(f'{r.answer2}')
+
+############################
+### FAKE DATA GENERATION ###
+############################
 
 
 def create_questions():
@@ -129,7 +200,7 @@ def create_questions():
             "How hard would it be for you to do that?"),
            ("Do you eat meat?", "yes", "How hard would it be for you to do that?"),
            ("Do you fly more than twice a year?", "yes",
-            "How hard would it be for you to do that?"),
+            "How hard would it be for you to use alternate transportation (e.g. rail)?"),
            ("Do you avoid single-use food and drink containers and utensils?", "no",
             "How hard would it be for you to do that?"),
            ("Do you drink milk?", "yes", "How hard would it be for you to do that?")]
@@ -233,55 +304,53 @@ def create_faketasks():
 def create_fakeanswers():
     # Create fake responses for 1:Bob
     userid = User.query.filter(User.name == "Bob")[0].id
-    print(f'Creating fake questionnaire for userid {userid}')
-
-
-@app.cli.command("adduser")
-@click.argument("name")
-def cli_newuser(name):
-    u = User()
-    u.name = name
-    u.points = 100
-    db.session.add(u)
+    print(f'Creating fake questionnaire responses for userid {userid}')
+    r = QuestionnaireResponse(
+        user_id=userid,
+        question_id=1,
+        answer1="yes",
+        answer2=""
+    )
+    db.session.add(r)
+    r = QuestionnaireResponse(
+        user_id=userid,
+        question_id=2,
+        answer1="no",
+        answer2="2"
+    )
+    db.session.add(r)
+    r = QuestionnaireResponse(
+        user_id=userid,
+        question_id=3,
+        answer1="yes",
+        answer2="5"
+    )
+    db.session.add(r)
+    r = QuestionnaireResponse(
+        user_id=userid,
+        question_id=4,
+        answer1="yes",
+        answer2="5"
+    )
+    db.session.add(r)
+    r = QuestionnaireResponse(
+        user_id=userid,
+        question_id=5,
+        answer1="no",
+        answer2="4"
+    )
+    db.session.add(r)
+    r = QuestionnaireResponse(
+        user_id=userid,
+        question_id=6,
+        answer1="no",
+        answer2=""
+    )
+    db.session.add(r)
     db.session.commit()
-    click.echo('User added.')
 
 
-@app.cli.command("getusers")
-def cli_getusers():
-    users = User.query.all()
-    click.echo(f'Found {len(users)} users.')
-    for u in users:
-        click.echo(f'{u.id}: {u.name}')
-
-
-@app.cli.command("gettasks")
-@click.argument("userid")
-def cli_gettasks(userid):
-    tasks = get_task_history(userid)
-    click.echo(f'Found {len(tasks)} tasks.')
-    for t in tasks:
-        click.echo(json.dumps(t.as_dict()))
-
-
-@app.cli.command("getquestions")
-def cli_getquestions():
-    qns = Question.query.all()
-    click.echo(f'Found {len(qns)} questions.')
-    for q in qns:
-        click.echo(f'{q.id}: {q.qn1}')
-
-
-@app.cli.command("gettasktemplates")
-def cli_gettasktemplates():
-    tts = TaskTemplate.query.all()
-    click.echo(f'Found {len(tts)} task templates.')
-    for t in tts:
-        click.echo(f'{t.id}: {t.desc}')
-
-
-######################
-
+###############################################
 
 @app.route('/')
 def root():
@@ -300,7 +369,7 @@ def questionnaire():
                 ans1 = row["answer1"]
             if "answer2" in row:
                 ans2 = row["answer2"]
-            ans = QuestionnaireAnswer(
+            ans = QuestionnaireResponse(
                 user_id=request_data["userId"],
                 question_id=row["questionId"],
                 answer1=ans1,
