@@ -197,13 +197,13 @@ def cli_getresponses(userid):
 def create_questions():
     qns = [("Do you recycle at least 50% of recyclable products you use?", "no", "How hard would it be for you to do that?"),
            ("Do you bring a bag to the supermarket?", "no",
-            "How hard would it be for you to do that?"),
-           ("Do you eat meat?", "yes", "How hard would it be for you to do that?"),
+            "How hard would it be for you to brin one?"),
+           ("Do you eat meat?", "yes", "How hard would it be to to stop eating meat for a day?"),
            ("Do you fly more than twice a year?", "yes",
-            "How hard would it be for you to use alternate transportation (e.g. rail)?"),
+            "How difficult would it be for you to fly less?"),
            ("Do you avoid single-use food and drink containers and utensils?", "no",
-            "How hard would it be for you to do that?"),
-           ("Do you drink milk?", "yes", "How hard would it be for you to do that?")]
+            "Would that be hard for you?"),
+           ("Do you drink milk?", "yes", "Could you drink plant milk instead?")]
 
     for d1, sqo, d2 in qns:
         q = Question(qn1=d1, qn2=d2, subquestion_option=sqo)
