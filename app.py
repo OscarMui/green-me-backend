@@ -52,6 +52,7 @@ class User(db.Model):
     name = db.Column(db.Text)
     points = db.Column(db.Integer)
     tasks = db.relationship('Task')  # collection
+    sub = db.Column(db.Text)  # from oauth
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -409,7 +410,48 @@ def questionnaire():
     return response
 
 
-# get name value from query string and cookie
+@app.route('/user/<int:id>', methods=['POST', 'GET'])
+def user(id):
+    pass
+
+
+@app.route('/usercallback', methods=['POST'])
+def usercallback():
+    request_data = request.get_json()
+    sub = request_data["sub"]
+    user = User.query.filter(User.sub == sub).all()
+    if len(user) == 0:
+        # No user found, create
+        user = User(
+            name=request_data["name"],
+            points=0,
+            sub=sub
+        )
+        db.session.add(user)
+        db.session.commit()
+        response = app.response_class(
+            response=json.dumps({
+                "status": "new",
+                "user_object": user.as_dict()
+            }),
+            status=200,
+            mimetype='application/json'
+        )
+        return response
+    else:
+        # User found
+        user = user[0]
+        response = app.response_class(
+            response=json.dumps({
+                "status": "existing",
+                "user_object": user.as_dict()
+            }),
+            status=200,
+            mimetype='application/json'
+        )
+        return response
+
+
 @ app.route('/hello')
 def hello():
     name = request.args.get('name')
