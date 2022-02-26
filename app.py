@@ -89,12 +89,12 @@ def get_task_history(userid=0):
 
 
 def get_incomplete_tasks(userid=0):
-    tasks = Task.query.filter(Task.user_id == userid, Task.completed=False)
+    tasks = Task.query.filter(Task.user_id == userid, Task.completed == False)
     return tasks
 
 
 def get_completed_tasks(userid=0):
-    tasks = Task.query.filter(Task.user_id == userid, Task.completed=True)
+    tasks = Task.query.filter(Task.user_id == userid, Task.completed == True)
     return tasks
 
 ###
