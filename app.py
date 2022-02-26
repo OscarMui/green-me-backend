@@ -131,11 +131,46 @@ def create_questions():
 def create_task_templates():
     tasks = []
     tasks.append(TaskTemplate(
-        desc="Walking to work",
+        desc="Recycle 4 items",
         user_points=10,
         carbon_savings=500.1,
         waste_savings=100.1,
         max_completions=4
+    ))
+    tasks.append(TaskTemplate(
+        desc="Bring a bag to the supermarket twice",
+        user_points=10,
+        carbon_savings=500.1,
+        waste_savings=100.1,
+        max_completions=2
+    ))
+    tasks.append(TaskTemplate(
+        desc="Don't eat meat for a day",
+        user_points=10,
+        carbon_savings=500.1,
+        waste_savings=100.1,
+        max_completions=1
+    ))
+    tasks.append(TaskTemplate(
+        desc="Choose a flight that emits less carbon emissions",
+        user_points=10,
+        carbon_savings=500.1,
+        waste_savings=100.1,
+        max_completions=1
+    ))
+    tasks.append(TaskTemplate(
+        desc="Decline using a single-use food or drink container or utensil once",
+        user_points=10,
+        carbon_savings=500.1,
+        waste_savings=100.1,
+        max_completions=1
+    ))
+    tasks.append(TaskTemplate(
+        desc="Buy a carton of plant milk",
+        user_points=10,
+        carbon_savings=500.1,
+        waste_savings=100.1,
+        max_completions=1
     ))
     for t in tasks:
         db.session.add(t)
