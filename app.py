@@ -142,6 +142,17 @@ def create_task_templates():
     db.session.commit()
 
 
+def create_fakeusers():
+    db.session.add(User(name="Bob", points=100))
+    db.session.add(User(name="Alice", points=100))
+    db.session.add(User(name="Jane", points=100))
+    db.session.commit()
+
+
+def create_faketasks():
+    pass
+
+
 @app.cli.command("adduser")
 @click.argument("name")
 def cli_newuser(name):
