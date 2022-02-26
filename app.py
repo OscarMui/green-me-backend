@@ -7,6 +7,8 @@ import os
 import sys
 import random
 import pprint
+import click
+from flask import json
 pp = pprint.PrettyPrinter(indent=4)
 try:
     from urlparse import urlparse, urljoin
@@ -33,27 +35,6 @@ db = SQLAlchemy(app)
 # Models
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text)
-    points = db.Column(db.Integer)
-    tasks = db.relationship('Task')  # collection
-
-
-class Task(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    template_id = db.Column(db.Integer, db.ForeignKey('tasktemplate.id'))
-    completed = db.Column(db.Boolean)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    num_completions = db.Column(db.Integer)
-
-
-def viktor_code():
-    # algorithm
-    walking1 = Task(template_id=100, id=1)
-    walking2 = Task(template_id=100, id=2)
-
-
 class TaskTemplate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     desc = db.Column(db.Text)
@@ -63,36 +44,138 @@ class TaskTemplate(db.Model):
     max_completions = db.Column(db.Integer)
 
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text)
+    points = db.Column(db.Integer)
+    tasks = db.relationship('Task')  # collection
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+class Task(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    template_id = db.Column(db.Integer, db.ForeignKey('task_template.id'))
+    completed = db.Column(db.Boolean)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    num_completions = db.Column(db.Integer)
+
+
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    desc = db.Column(db.Text)
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
+class QuestionnaireAnswer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'))
+    answer1 = db.Column(db.Text)
+    answer2 = db.Column(db.Text)
+
+
 def get_all_task_templates():
-    pass
+    tts = TaskTemplate.query.all()
+    return tts
 
 
 def get_task_history(userid=0):
-    pass
+    tasks = Task.query.filter(Task.user_id == userid)
+    return tasks
 
 
 def get_incomplete_tasks(userid=0):
-    pass
+    tasks = Task.query.filter(Task.user_id == userid, Task.completed=False)
+    return tasks
 
 
 def get_completed_tasks(userid=0):
-    pass
+    tasks = Task.query.filter(Task.user_id == userid, Task.completed=True)
+    return tasks
 
 ###
-# DEBUG COMMANDS
+# CLI COMMANDS
 ###
 
 
-@app.route('/user/new')
-def new_user():
+@app.cli.command("initdb")
+@click.option('--drop', is_flag=True, help='Create after drop.')
+def cli_initdb(drop):
+    """Initialize the database."""
+    if drop:
+        db.drop_all()
+    db.create_all()
+    create_questions()
+    create_task_templates()
+    click.echo('Initialized database.')
+
+
+def create_questions():
+    qns = ["Do you recycle at least 50% of recyclable products you use?",
+           "Do you bring a bag to the supermarket?",
+           "Do you eat meat?",
+           "Do you fly more than twice a year?",
+           "Do you avoid single-use food and drink containers and utensils?",
+           "Do you drink milk?"]
+
+    for qdesc in qns:
+        q = Question(desc=qdesc)
+        db.session.add(q)
+    db.session.commit()
+
+
+def create_task_templates():
+    tasks = []
+    tasks.append(TaskTemplate(
+        desc="Walking to work",
+        user_points=10,
+        carbon_savings=500.1,
+        waste_savings=100.1,
+        max_completions=4
+    ))
+    for t in tasks:
+        db.session.add(t)
+    db.session.commit()
+
+
+@app.cli.command("adduser")
+@click.argument("name")
+def cli_newuser(name):
     u = User()
-    u.id = random.randint(1, 1000000000)
-    u.name = f"New user {u.id}"
+    u.name = name
     u.points = 100
     db.session.add(u)
     db.session.commit()
-    response = "Saved"
-    return response
+    click.echo('User added.')
+
+
+@app.cli.command("getusers")
+def cli_getusers():
+    users = User.query.all()
+    click.echo(f'Found {len(users)} users.')
+    for u in users:
+        click.echo(f'{u.id}: {u.name}')
+
+
+@app.cli.command("getquestions")
+def cli_getquestions():
+    qns = Question.query.all()
+    click.echo(f'Found {len(qns)} questions.')
+    for q in qns:
+        click.echo(f'{q.id}: {q.desc}')
+
+
+@app.cli.command("gettasktemplates")
+def cli_gettasktemplates():
+    tts = TaskTemplate.query.all()
+    click.echo(f'Found {len(tts)} task templates.')
+    for t in tts:
+        click.echo(f'{t.id}: {t.desc}')
+
 
 ######################
 
@@ -107,15 +190,36 @@ def root():
 def questionnaire():
     if request.method == 'POST':
         request_data = request.get_json()
+
+        for row in request_data["results"]:
+            ans1, ans2 = "", ""
+            if "answer1" in row:
+                ans1 = row["answer1"]
+            if "answer2" in row:
+                ans2 = row["answer2"]
+            ans = QuestionnaireAnswer(
+                user_id=request_data["userId"],
+                question_id=row["questionId"],
+                answer1=ans1,
+                answer2=ans2
+            )
+            db.session.add(ans)
+        db.session.commit()
         pp.pprint(request_data)
         response = "POSTED"
     else:  # GET
-        response = "GET on /questionnaire"
+        qns = Question.query.all()
+        qns = [q.as_dict() for q in qns]
+        response = app.response_class(
+            response=json.dumps(qns),
+            status=200,
+            mimetype='application/json'
+        )
     return response
 
 
 # get name value from query string and cookie
-@app.route('/hello')
+@ app.route('/hello')
 def hello():
     name = request.args.get('name')
     if name is None:
@@ -130,25 +234,25 @@ def hello():
 
 
 # redirect
-@app.route('/hi')
+@ app.route('/hi')
 def hi():
     return redirect(url_for('hello'))
 
 
 # use int URL converter
-@app.route('/goback/<int:year>')
+@ app.route('/goback/<int:year>')
 def go_back(year):
     return 'Welcome to %d!' % (2018 - year)
 
 
 # use any URL converter
-@app.route('/colors/<any(blue, white, red):color>')
+@ app.route('/colors/<any(blue, white, red):color>')
 def three_colors(color):
     return '<p>Love is patient and kind. Love is not jealous or boastful or proud or rude.</p>'
 
 
 # return error response
-@app.route('/brew/<drink>')
+@ app.route('/brew/<drink>')
 def teapot(drink):
     if drink == 'coffee':
         abort(418)
@@ -157,14 +261,14 @@ def teapot(drink):
 
 
 # 404
-@app.route('/404')
+@ app.route('/404')
 def not_found():
     abort(404)
 
 
 # return response with different formats
-@app.route('/note', defaults={'content_type': 'text'})
-@app.route('/note/<content_type>')
+@ app.route('/note', defaults={'content_type': 'text'})
+@ app.route('/note/<content_type>')
 def note(content_type):
     content_type = content_type.lower()
     if content_type == 'text':
@@ -220,7 +324,7 @@ body: Don't forget the party!
 
 
 # set cookie
-@app.route('/set/<name>')
+@ app.route('/set/<name>')
 def set_cookie(name):
     response = make_response(redirect(url_for('hello')))
     response.set_cookie('name', name)
@@ -228,14 +332,14 @@ def set_cookie(name):
 
 
 # log in user
-@app.route('/login')
+@ app.route('/login')
 def login():
     session['logged_in'] = True
     return redirect(url_for('hello'))
 
 
 # protect view
-@app.route('/admin')
+@ app.route('/admin')
 def admin():
     if 'logged_in' not in session:
         abort(403)
@@ -243,7 +347,7 @@ def admin():
 
 
 # log out user
-@app.route('/logout')
+@ app.route('/logout')
 def logout():
     if 'logged_in' in session:
         session.pop('logged_in')
@@ -251,7 +355,7 @@ def logout():
 
 
 # AJAX
-@app.route('/post')
+@ app.route('/post')
 def show_post():
     post_body = generate_lorem_ipsum(n=2)
     return '''
@@ -274,25 +378,25 @@ $(function() {
 </script>''' % post_body
 
 
-@app.route('/more')
+@ app.route('/more')
 def load_post():
     return generate_lorem_ipsum(n=1)
 
 
 # redirect to last page
-@app.route('/foo')
+@ app.route('/foo')
 def foo():
     return '<h1>Foo page</h1><a href="%s">Do something and redirect</a>' \
            % url_for('do_something', next=request.full_path)
 
 
-@app.route('/bar')
+@ app.route('/bar')
 def bar():
     return '<h1>Bar page</h1><a href="%s">Do something and redirect</a>' \
            % url_for('do_something', next=request.full_path)
 
 
-@app.route('/do-something')
+@ app.route('/do-something')
 def do_something():
     # do something here
     return redirect_back()
