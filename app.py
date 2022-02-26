@@ -9,6 +9,9 @@ import random
 import pprint
 import click
 from flask import json
+from task_recommender import *
+
+
 pp = pprint.PrettyPrinter(indent=4)
 try:
     from urlparse import urlparse, urljoin
@@ -188,6 +191,12 @@ def cli_getresponses(userid):
         click.echo(f'{r.id}: qn_id = {r.question_id}')
         click.echo(f'{r.answer1}')
         click.echo(f'{r.answer2}')
+
+@app.cli.command("recommend")
+@click.argument("userid")
+def cli_recommend(userid):
+    tasks = recommend_tasks(get_questionnaire_responses(userid), get_all_task_templates(), get_incomplete_tasks(userid), get_completed_tasks(userid))
+    print(tasks)
 
 ############################
 ### FAKE DATA GENERATION ###
