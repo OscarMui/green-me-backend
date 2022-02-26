@@ -32,7 +32,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Models
+### MODELS ###
 
 
 class TaskTemplate(db.Model):
@@ -61,10 +61,14 @@ class Task(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     num_completions = db.Column(db.Integer)
 
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    desc = db.Column(db.Text)
+    qn1 = db.Column(db.Text)
+    qn2 = db.Column(db.Text)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -84,17 +88,19 @@ def get_all_task_templates():
 
 
 def get_task_history(userid=0):
-    tasks = Task.query.filter(Task.user_id == userid)
+    tasks = Task.query.filter(Task.user_id == userid).all()
     return tasks
 
 
 def get_incomplete_tasks(userid=0):
-    tasks = Task.query.filter(Task.user_id == userid, Task.completed == False)
+    tasks = Task.query.filter(Task.user_id == userid,
+                              Task.completed == False).all()
     return tasks
 
 
 def get_completed_tasks(userid=0):
-    tasks = Task.query.filter(Task.user_id == userid, Task.completed == True)
+    tasks = Task.query.filter(Task.user_id == userid,
+                              Task.completed == True).all()
     return tasks
 
 ###
@@ -111,19 +117,24 @@ def cli_initdb(drop):
     db.create_all()
     create_questions()
     create_task_templates()
+    create_fakeusers()
+    create_faketasks()
     click.echo('Initialized database.')
 
 
 def create_questions():
-    qns = ["Do you recycle at least 50% of recyclable products you use?",
-           "Do you bring a bag to the supermarket?",
-           "Do you eat meat?",
-           "Do you fly more than twice a year?",
-           "Do you avoid single-use food and drink containers and utensils?",
-           "Do you drink milk?"]
+    qns = [("Do you recycle at least 50% of recyclable products you use?", "How hard would it be for you to do that?"),
+           ("Do you bring a bag to the supermarket?",
+            "How hard would it be for you to do that?"),
+           ("Do you eat meat?", "How hard would it be for you to do that?"),
+           ("Do you fly more than twice a year?",
+            "How hard would it be for you to do that?"),
+           ("Do you avoid single-use food and drink containers and utensils?",
+            "How hard would it be for you to do that?"),
+           ("Do you drink milk?", "How hard would it be for you to do that?")]
 
-    for qdesc in qns:
-        q = Question(desc=qdesc)
+    for d1, d2 in qns:
+        q = Question(qn1=d1, qn2=d2)
         db.session.add(q)
     db.session.commit()
 
@@ -185,7 +196,43 @@ def create_fakeusers():
 
 
 def create_faketasks():
-    pass
+    userid = User.query.filter(User.name == "Bob")[0].id
+    print(f'Creating fake tasks for userid {userid}')
+    t = Task(
+        template_id=3,
+        completed=True,
+        user_id=userid,
+        num_completions=1
+    )
+    db.session.add(t)
+    t = Task(
+        template_id=1,
+        completed=True,
+        user_id=userid,
+        num_completions=4
+    )
+    db.session.add(t)
+    t = Task(
+        template_id=1,
+        completed=False,
+        user_id=userid,
+        num_completions=2
+    )
+    db.session.add(t)
+    t = Task(
+        template_id=4,
+        completed=False,
+        user_id=userid,
+        num_completions=0
+    )
+    db.session.add(t)
+    db.session.commit()
+
+
+def create_fakeanswers():
+    # Create fake responses for 1:Bob
+    userid = User.query.filter(User.name == "Bob")[0].id
+    print(f'Creating fake questionnaire for userid {userid}')
 
 
 @app.cli.command("adduser")
@@ -205,6 +252,15 @@ def cli_getusers():
     click.echo(f'Found {len(users)} users.')
     for u in users:
         click.echo(f'{u.id}: {u.name}')
+
+
+@app.cli.command("gettasks")
+@click.argument("userid")
+def cli_gettasks(userid):
+    tasks = get_task_history(userid)
+    click.echo(f'Found {len(tasks)} tasks.')
+    for t in tasks:
+        click.echo(json.dumps(t.as_dict()))
 
 
 @app.cli.command("getquestions")
@@ -398,30 +454,6 @@ def logout():
     if 'logged_in' in session:
         session.pop('logged_in')
     return redirect(url_for('hello'))
-
-
-# AJAX
-@ app.route('/post')
-def show_post():
-    post_body = generate_lorem_ipsum(n=2)
-    return '''
-<h1>A very long post</h1>
-<div class="body">%s</div>
-<button id="load">Load More</button>
-<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script type="text/javascript">
-$(function() {
-    $('#load').click(function() {
-        $.ajax({
-            url: '/more',
-            type: 'get',
-            success: function(data){
-                $('.body').append(data);
-            }
-        })
-    })
-})
-</script>''' % post_body
 
 
 @ app.route('/more')
