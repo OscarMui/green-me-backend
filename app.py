@@ -117,6 +117,15 @@ def get_questionnaire_responses(userid=0):
         QuestionnaireResponse.user_id == userid).all()
     return responses
 
+
+def get_all_questions():
+    qns = Question.query.all()
+    d = {}
+    for q in qns:
+        d[q.id] = q
+    return d
+
+
 ################
 # CLI COMMANDS #
 ################
@@ -167,10 +176,8 @@ def cli_gettasks(userid):
 
 @app.cli.command("getquestions")
 def cli_getquestions():
-    qns = Question.query.all()
-    click.echo(f'Found {len(qns)} questions.')
-    for q in qns:
-        click.echo(f'{q.id}: {q.qn1}')
+    qns = get_all_questions()
+    print(qns)
 
 
 @app.cli.command("gettasktemplates")
@@ -192,10 +199,12 @@ def cli_getresponses(userid):
         click.echo(f'{r.answer1}')
         click.echo(f'{r.answer2}')
 
+
 @app.cli.command("recommend")
 @click.argument("userid")
 def cli_recommend(userid):
-    tasks = recommend_tasks(get_questionnaire_responses(userid), get_all_task_templates(), get_incomplete_tasks(userid), get_completed_tasks(userid))
+    tasks = recommend_tasks(get_questionnaire_responses(userid), get_all_task_templates(
+    ), get_incomplete_tasks(userid), get_completed_tasks(userid))
     print(tasks)
 
 ############################
@@ -207,7 +216,8 @@ def create_questions():
     qns = [("Do you recycle at least 50% of recyclable products you use?", "no", "How hard would it be for you to do that?"),
            ("Do you bring a bag to the supermarket?", "no",
             "How hard would it be for you to brin one?"),
-           ("Do you eat meat?", "yes", "How hard would it be to to stop eating meat for a day?"),
+           ("Do you eat meat?", "yes",
+            "How hard would it be to to stop eating meat for a day?"),
            ("Do you fly more than twice a year?", "yes",
             "How difficult would it be for you to fly less?"),
            ("Do you avoid single-use food and drink containers and utensils?", "no",
