@@ -204,7 +204,7 @@ def cli_getresponses(userid):
 @app.cli.command("recommend")
 @click.argument("userid")
 def cli_recommend(userid):
-    tasks = recommend_tasks(get_questionnaire_responses(userid), get_all_task_templates(
+    tasks = recommend_tasks(get_all_questions(), get_questionnaire_responses(userid), get_all_task_templates(
     ), get_incomplete_tasks(userid), get_completed_tasks(userid))
     print(tasks)
 
@@ -243,8 +243,8 @@ def create_task_templates():
     tasks.append(TaskTemplate(
         desc="Bring a bag to the supermarket twice",
         user_points=10,
-        carbon_savings=500.1,
-        waste_savings=100.1,
+        carbon_savings=0.1,
+        waste_savings=0.1,
         max_completions=2
     ))
     tasks.append(TaskTemplate(

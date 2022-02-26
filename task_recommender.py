@@ -34,11 +34,11 @@ def get_task_template_with_id(all_task_templates, id):
         if task_template.id == id:
             return task_template
 
-def get_sorted_impacts(question_id_dict, question_responses, all_task_templates, incomplete_tasks, completed_tasks):
+def get_sorted_impacts(question_dict, question_responses, all_task_templates, incomplete_tasks, completed_tasks):
     impacts = []
     for response in question_responses:
         hardness_rating = 0
-        if response.answer1 == "yes":
+        if (question_dict[response.question_id].subquestion_option == "no") == (response.answer1 == "yes"):
             hardness_rating = 0
         else:
             hardness_rating = int(response.answer2)
@@ -57,9 +57,9 @@ def get_sorted_impacts(question_id_dict, question_responses, all_task_templates,
         score += task_template.waste_savings / AVERAGE_FOOTPRINT_PER_WEEK['waste']
         score *= increase_in_probability
 
-        impacts.append([score, response])
+        impacts.append([score, task_template])
 
-    impacts.sort(reverse=True)
+    impacts.sort(reverse=True, key=lambda x: x[0])
 
     return impacts
 
@@ -79,11 +79,11 @@ def get_task_templates_to_recommend(impacts, incomplete_tasks):
             task_templates_to_recommend.append(task_template)
     return task_templates_to_recommend
 
-def recommend_tasks(question_responses, all_task_templates, incomplete_tasks, completed_tasks):
+def recommend_tasks(question_dict, question_responses, all_task_templates, incomplete_tasks, completed_tasks):
     if len(incomplete_tasks) == NUMBER_OF_TASKS_AT_ONE_TIME:
         return []
 
-    impacts = get_sorted_impacts(question_responses, all_task_templates, incomplete_tasks, completed_tasks)
+    impacts = get_sorted_impacts(question_dict, question_responses, all_task_templates, incomplete_tasks, completed_tasks)
     task_templates_to_recommend = get_task_templates_to_recommend(impacts, incomplete_tasks)
 
     return task_templates_to_recommend
