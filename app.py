@@ -99,6 +99,11 @@ def get_all_task_templates():
     return tts
 
 
+def get_template(templateid=0):
+    template = TaskTemplate.query.get(templateid)
+    return template
+
+
 def get_task_history(userid=0):
     tasks = Task.query.filter(Task.user_id == userid).all()
     return tasks
@@ -464,14 +469,25 @@ def incompletetasks(id):
     return response
 
 
-@app.route('/user/<int:userid>/task/<int:taskid>', methods=['GET', 'POST'])
-def task(userid, taskid):
+@app.route('/task/<int:taskid>', methods=['GET', 'POST'])
+def task(taskid):
     if request.method == 'POST':
-        pass
+        request_data = request.get_json()
+        userid = request_data["userId"]
+        taskid = request_data["task"]["id"]
+        update = request_data["task"]["update"]
+
+        if update == "yes":
+            task = Task.query.get(userid)
+            template = get_template(task.template_id)
+            task.num_completions += 1
+            if task.num_completions == template.max_completions:
+                task.completed = True
+
     else:
         task = get_task(taskid)
-        if task.user_id != userid:
-            abort(401)
+        # if task.user_id != userid:
+        #     abort(401)
         tts = get_all_task_templates()
         tts = [t.as_dict() for t in tts]
         response = app.response_class(
