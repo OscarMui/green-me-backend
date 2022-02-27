@@ -230,14 +230,14 @@ def cli_recommend(userid):
 def create_questions():
     qns = [("Do you recycle at least 50% of recyclable products you use?", "no", "How hard would it be for you to do that?"),
            ("Do you bring a bag to the supermarket?", "no",
-            "How hard would it be for you to brin one?"),
+            "How difficult would it be for you to bring one?"),
            ("Do you eat meat?", "yes",
-            "How hard would it be to to stop eating meat for a day?"),
+            "How challenging would it be for you to stop eating meat for a while?"),
            ("Do you fly more than twice a year?", "yes",
             "How difficult would it be for you to fly less?"),
            ("Do you avoid single-use food and drink containers and utensils?", "no",
             "Would that be hard for you?"),
-           ("Do you drink milk?", "yes", "Could you drink plant milk instead?")]
+           ("Do you drink milk?", "yes", "How difficult would it be for you to switch to plant milk?")]
 
     for d1, sqo, d2 in qns:
         q = Question(qn1=d1, qn2=d2, subquestion_option=sqo)
@@ -250,43 +250,43 @@ def create_task_templates():
     tasks.append(TaskTemplate(
         desc="Recycle 4 items",
         user_points=10,
-        carbon_savings=0.432,
-        waste_savings=0.4,
+        carbon_savings=0.43,
+        waste_savings=0.40,
         max_completions=4
     ))
     tasks.append(TaskTemplate(
         desc="Bring a bag to the supermarket twice",
         user_points=10,
-        carbon_savings=0.2,
-        waste_savings=0.2,
+        carbon_savings=0.20,
+        waste_savings=0.20,
         max_completions=2
     ))
     tasks.append(TaskTemplate(
         desc="Don't eat meat for a day",
         user_points=10,
-        carbon_savings=2.6,
-        waste_savings=0.0,
+        carbon_savings=2.60,
+        waste_savings=0.00,
         max_completions=1
     ))
     tasks.append(TaskTemplate(
         desc="Choose a flight that emits less carbon emissions",
         user_points=10,
-        carbon_savings=25.0,
-        waste_savings=0.0,
+        carbon_savings=25.00,
+        waste_savings=0.00,
         max_completions=1
     ))
     tasks.append(TaskTemplate(
         desc="Decline using a single-use food or drink container or utensil once",
         user_points=10,
         carbon_savings=2.13,
-        waste_savings=0.1,
+        waste_savings=0.10,
         max_completions=1
     ))
     tasks.append(TaskTemplate(
         desc="Buy a carton of plant milk",
         user_points=10,
-        carbon_savings=1.7,
-        waste_savings=0.0,
+        carbon_savings=1.70,
+        waste_savings=0.00,
         max_completions=1
     ))
     for t in tasks:
