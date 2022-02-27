@@ -178,7 +178,7 @@ def cli_getusers():
     users = User.query.all()
     click.echo(f'Found {len(users)} users.')
     for u in users:
-        click.echo(f'{u.id}: {u.name}')
+        click.echo(f'{u.id}: {u.name} {u.points}')
 
 
 @app.cli.command("gettasks")
@@ -476,14 +476,21 @@ def task(taskid):
         userid = request_data["userId"]
         taskid = request_data["task"]["id"]
         update = request_data["task"]["update"]
+        print(update)
 
         if update == "yes":
-            task = Task.query.get(userid)
+            task = db.session.query(Task).get(taskid)
+            print(f'task id = {task.id}')
             template = get_template(task.template_id)
+            print(task.num_completions)
             task.num_completions += 1
+            print(task.num_completions)
             if task.num_completions == template.max_completions:
                 task.completed = True
-            db.session.add(task)
+
+            user = db.session.query(User).get(userid)
+            pts = template.user_points
+            user.points += pts
 
             if task.completed:  # Generate new recommendations
                 tasks = get_next_tasks(userid)
@@ -497,15 +504,24 @@ def task(taskid):
                     )
                     task_objects.append(t.as_dict())
                     db.session.add(t)
+                print(f'{len(tasks)} tasks were generated for userid {userid}')
+                resp_payload = json.dumps(task_objects)
+            else:
+                resp_payload = {}
             db.session.commit()
 
-            print(f'{len(tasks)} tasks were generated for userid {userid}')
-
             response = app.response_class(
-                response=json.dumps(task_objects),
+                response=resp_payload,
                 status=200,
                 mimetype='application/json'
             )
+        else:
+            response = app.response_class(
+                response="{}",
+                status=200,
+                mimetype='application/json'
+            )
+        return response
     else:
         task = get_task(taskid)
         # if task.user_id != userid:
