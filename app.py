@@ -499,6 +499,7 @@ def usercallback():
         response = app.response_class(
             response=json.dumps({
                 "status": "new",
+                "questionnaire_status": "incomplete",
                 "user_object": user.as_dict()
             }),
             status=200,
@@ -508,9 +509,14 @@ def usercallback():
     else:
         # User found
         user = user[0]
+        if len(get_questionnaire_responses(user.id)) == 0:
+            qstatus = "incomplete"
+        else:
+            qstatus = "done"
         response = app.response_class(
             response=json.dumps({
                 "status": "existing",
+                "questionnaire_status": qstatus,
                 "user_object": user.as_dict()
             }),
             status=200,
