@@ -483,7 +483,29 @@ def task(taskid):
             task.num_completions += 1
             if task.num_completions == template.max_completions:
                 task.completed = True
+            db.session.add(task)
 
+            if task.completed:  # Generate new recommendations
+                tasks = get_next_tasks(userid)
+                task_objects = []
+                for tasktemplate in tasks:
+                    t = Task(
+                        template_id=tasktemplate.id,
+                        completed=False,
+                        user_id=userid,
+                        num_completions=0
+                    )
+                    task_objects.append(t.as_dict())
+                    db.session.add(t)
+            db.session.commit()
+
+            print(f'{len(tasks)} tasks were generated for userid {userid}')
+
+            response = app.response_class(
+                response=json.dumps(task_objects),
+                status=200,
+                mimetype='application/json'
+            )
     else:
         task = get_task(taskid)
         # if task.user_id != userid:
