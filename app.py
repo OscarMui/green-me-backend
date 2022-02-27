@@ -254,28 +254,28 @@ def create_task_templates():
     tasks = []
     tasks.append(TaskTemplate(
         desc="Recycle 4 items",
-        user_points=10,
+        user_points=40,
         carbon_savings=0.43,
         waste_savings=0.40,
         max_completions=4
     ))
     tasks.append(TaskTemplate(
         desc="Bring a bag to the supermarket twice",
-        user_points=10,
+        user_points=20,
         carbon_savings=0.20,
         waste_savings=0.20,
         max_completions=2
     ))
     tasks.append(TaskTemplate(
         desc="Don't eat meat for a day",
-        user_points=10,
+        user_points=100,
         carbon_savings=2.60,
         waste_savings=0.00,
         max_completions=1
     ))
     tasks.append(TaskTemplate(
         desc="Choose a flight that emits less carbon emissions",
-        user_points=10,
+        user_points=800,
         carbon_savings=25.00,
         waste_savings=0.00,
         max_completions=1
@@ -289,7 +289,7 @@ def create_task_templates():
     ))
     tasks.append(TaskTemplate(
         desc="Buy a carton of plant milk",
-        user_points=10,
+        user_points=60,
         carbon_savings=1.70,
         waste_savings=0.00,
         max_completions=1
