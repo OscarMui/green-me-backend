@@ -34,6 +34,9 @@ def get_task_template_with_id(all_task_templates, id):
         if task_template.id == id:
             return task_template
 
+def count_completed_tasks_with_template_id(completed_tasks, template_id):
+    return sum(int(task.template_id == template_id) for task in completed_tasks)
+
 def get_sorted_impacts(question_dict, question_responses, all_task_templates, incomplete_tasks, completed_tasks):
     impacts = []
     for response in question_responses:
@@ -56,6 +59,9 @@ def get_sorted_impacts(question_dict, question_responses, all_task_templates, in
         score = task_template.carbon_savings / AVERAGE_FOOTPRINT_PER_WEEK['co2']
         score += task_template.waste_savings / AVERAGE_FOOTPRINT_PER_WEEK['waste']
         score *= increase_in_probability
+        if count_completed_tasks_with_template_id(completed_tasks, response.question_id) > 0:
+            score = 0
+        #score *= pow(2, count_completed_tasks_with_template_id(completed_tasks, response.question_id))
 
         impacts.append([score, task_template])
 
