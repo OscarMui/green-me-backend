@@ -36,7 +36,16 @@ db = SQLAlchemy(app)
 
 ### FOR DEPLOYMENT###
 def getApp():
+    """Initialize the database."""
+    db.create_all()
+    create_questions()
+    create_task_templates()
+    create_fakeusers()
+    create_faketasks()
+    create_fakeanswers()
+    click.echo('Initialized database.')
     return app
+    
 ### MODELS ###
 
 
