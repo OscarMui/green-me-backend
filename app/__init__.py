@@ -35,6 +35,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+### FOR DEPLOYMENT###
+def getApp():
+    return app
 ### MODELS ###
 
 
