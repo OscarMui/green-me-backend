@@ -254,7 +254,7 @@ def create_task_templates():
     tasks = []
     tasks.append(TaskTemplate(
         desc="Recycle 4 items",
-        user_points=40,
+        user_points=10,
         carbon_savings=0.43,
         waste_savings=0.40,
         max_completions=4
