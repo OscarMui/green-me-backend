@@ -36,16 +36,8 @@ db = SQLAlchemy(app)
 
 ### FOR DEPLOYMENT###
 def getApp():
-    """Initialize the database."""
-    db.create_all()
-    create_questions()
-    create_task_templates()
-    create_fakeusers()
-    create_faketasks()
-    create_fakeanswers()
-    click.echo('Initialized database.')
     return app
-    
+
 ### MODELS ###
 
 
@@ -506,6 +498,9 @@ def root():
     response = "Nothing here, move along."
     return response
 
+@app.route('/initdbdrop')
+def initdb():
+    cli_initdb(true)
 
 @app.route('/questionnaire', methods=['POST', 'GET'])
 def questionnaire():
