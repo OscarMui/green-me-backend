@@ -499,13 +499,21 @@ def root():
     return response
 
 @app.route('/initdbdrop')
-def initdb():
-    cli_initdb(True)
+def initdbdrop():
+    """Initialize the database."""
+    db.drop_all()
+    db.create_all()
+    create_questions()
+    create_task_templates()
+    create_fakeusers()
+    create_faketasks()
+    create_fakeanswers()
+    click.echo('Initialized database.')
     response = app.response_class(
-                response="{}",
-                status=200,
-                mimetype='application/json'
-            )
+        response="{}",
+        status=200,
+        mimetype='application/json'
+    )
     return response
 
 @app.route('/questionnaire', methods=['POST', 'GET'])
