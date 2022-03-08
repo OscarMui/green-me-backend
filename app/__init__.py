@@ -500,7 +500,13 @@ def root():
 
 @app.route('/initdbdrop')
 def initdb():
-    cli_initdb(true)
+    cli_initdb(True)
+    response = app.response_class(
+                response="{}",
+                status=200,
+                mimetype='application/json'
+            )
+    return response
 
 @app.route('/questionnaire', methods=['POST', 'GET'])
 def questionnaire():
